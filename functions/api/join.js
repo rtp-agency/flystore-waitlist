@@ -8,7 +8,7 @@
  *
  * Разбор и отправка общие с версией для Vercel, здесь только вход и выход.
  */
-import { handleLead, originAllowed } from "../../shared/lead.js";
+import { handleLead, originAllowed, setting } from "../../shared/lead.js";
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), {
@@ -18,7 +18,7 @@ const json = (status, body) =>
 
 export async function onRequestPost({ request, env }) {
   try {
-    if (!originAllowed(request.headers.get("origin"), env.ALLOWED_ORIGIN)) {
+    if (!originAllowed(request.headers.get("origin"), setting(env, "ALLOWED_ORIGIN"))) {
       return json(403, { error: { message: "Заявки принимаются только с нашего сайта" } });
     }
 
@@ -30,8 +30,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     const answer = await handleLead(body, {
-      token: env.TELEGRAM_BOT_TOKEN,
-      chats: env.TELEGRAM_CHAT_IDS,
+      token: setting(env, "TELEGRAM_BOT_TOKEN"),
+      chats: setting(env, "TELEGRAM_CHAT_IDS"),
     });
 
     return json(answer.status, answer.body);

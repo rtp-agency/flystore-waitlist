@@ -17,6 +17,7 @@ import {
   leadMessage,
   normalizePhone,
   normalizeTelegram,
+  setting,
 } from "../shared/lead.js";
 
 test("юзернейм принимается в любом виде, в каком его копируют", () => {
@@ -127,4 +128,15 @@ test("без настроек заявку не теряем молча", async 
     {},
   );
   assert.equal(answer.status, 503);
+});
+
+test("настройка читается и под именем с двойкой", () => {
+  assert.equal(setting({ TOKEN: "первый" }, "TOKEN"), "первый");
+  // Заведённую переменную трогать не стали, значение положили рядом.
+  assert.equal(setting({ TOKEN2: "второй" }, "TOKEN"), "второй");
+  // Пустая строка это не значение: смысл имени с двойкой как раз в подмене.
+  assert.equal(setting({ TOKEN: "  ", TOKEN2: "второй" }, "TOKEN"), "второй");
+  // Вставка из буфера приносит перевод строки, Telegram на него отвечает отказом.
+  assert.equal(setting({ TOKEN: ` abc${String.fromCharCode(10)}` }, "TOKEN"), "abc");
+  assert.equal(setting(undefined, "TOKEN"), "");
 });

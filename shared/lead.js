@@ -130,6 +130,25 @@ export function leadMessage(lead) {
 }
 
 /**
+ * Значение настройки из окружения.
+ *
+ * Кроме основного имени смотрим на имя с двойкой. В Vercel переменная с одним
+ * ключом в окружении может быть только одна, и когда заведённую трогать
+ * не хочется, значение кладут рядом как `TELEGRAM_BOT_TOKEN2`. Пусть работает
+ * и так: искать поломку в коде из-за цифры в имени никому не нужно.
+ *
+ * Заодно обрезаем пробелы: значение почти всегда попадает сюда вставкой
+ * из буфера, а лишний перевод строки в токене это отказ Telegram без объяснений.
+ *
+ * @param {Record<string, string | undefined> | undefined} source
+ * @param {string} name
+ */
+export function setting(source, name) {
+  const first = String(source?.[name] ?? "").trim();
+  return first || String(source?.[`${name}2`] ?? "").trim();
+}
+
+/**
  * Список через запятую: чаты в одной настройке, домены в другой.
  * @param {string | undefined} value
  */

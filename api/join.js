@@ -8,7 +8,7 @@
  * Отсюда же общий try: неожиданная ошибка обязана вернуться человеку понятной
  * строкой, а не страницей хостинга, из которой не видно вообще ничего.
  */
-import { handleLead, originAllowed } from "../shared/lead.js";
+import { handleLead, originAllowed, setting } from "../shared/lead.js";
 
 export default async function handler(request, response) {
   try {
@@ -20,7 +20,8 @@ export default async function handler(request, response) {
     // Чужой домен, дёргающий нашу форму, это либо кража трафика, либо спам.
     // Настройка пустая значит проверки нет: так проще поднять на новом адресе.
     const origin = request.headers?.origin;
-    if (!originAllowed(typeof origin === "string" ? origin : null, process.env.ALLOWED_ORIGIN)) {
+    const allowed = setting(process.env, "ALLOWED_ORIGIN");
+    if (!originAllowed(typeof origin === "string" ? origin : null, allowed)) {
       response.status(403).json({ error: { message: "Заявки принимаются только с нашего сайта" } });
       return;
     }
@@ -36,8 +37,8 @@ export default async function handler(request, response) {
     }
 
     const answer = await handleLead(body, {
-      token: process.env.TELEGRAM_BOT_TOKEN,
-      chats: process.env.TELEGRAM_CHAT_IDS,
+      token: setting(process.env, "TELEGRAM_BOT_TOKEN"),
+      chats: setting(process.env, "TELEGRAM_CHAT_IDS"),
     });
 
     response.status(answer.status).json(answer.body);

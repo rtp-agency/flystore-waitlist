@@ -13,7 +13,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 
-import { handleLead } from "../shared/lead.js";
+import { handleLead, setting } from "../shared/lead.js";
 
 const ROOT = new URL("../dist/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 const PORT = Number(process.env.PORT ?? 4321);
@@ -53,8 +53,8 @@ const server = createServer(async (request, response) => {
     }
 
     const answer = await handleLead(body, {
-      token: process.env.TELEGRAM_BOT_TOKEN,
-      chats: process.env.TELEGRAM_CHAT_IDS,
+      token: setting(process.env, "TELEGRAM_BOT_TOKEN"),
+      chats: setting(process.env, "TELEGRAM_CHAT_IDS"),
     });
     response.writeHead(answer.status, { "Content-Type": "application/json; charset=utf-8" });
     response.end(JSON.stringify(answer.body));
@@ -83,7 +83,8 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(PORT, () => {
-  const ready = process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_IDS;
+  const ready =
+    setting(process.env, "TELEGRAM_BOT_TOKEN") && setting(process.env, "TELEGRAM_CHAT_IDS");
   console.log(`страница: http://localhost:${PORT}`);
   console.log(
     ready
