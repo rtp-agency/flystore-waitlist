@@ -1,0 +1,650 @@
+@import "tailwindcss";
+
+/* Onest как основная гарнитура и JetBrains Mono для меток и цифр. Обе OFL,
+   обе с полной кириллицей, включая і ї є ґ. Satoshi и General Sans пришлось
+   снять: в них ноль кириллических глифов, весь текст падал на системный шрифт.
+   Файлы лежат у нас, за шрифтами страница никуда не ходит. */
+@import "./fonts.css";
+
+@theme {
+  /* Хром страницы монохромный намеренно. Цвет на странице приходит только из
+     витрин, которые мы генерируем, и не спорит с ними. Серые тона одного
+     семейства, чуть холодного: смешивать тёплый и холодный серый нельзя,
+     иначе интерфейс выглядит собранным из двух разных макетов. */
+  --color-ground: #ffffff;
+  --color-surface: #f6f6f8;
+  --color-sunken: #ececf0;
+  --color-line: #e4e4ea;
+  /* Волосяная линия поверх цветного фона: не красит, а проявляет край. */
+  --color-hair: rgba(11, 11, 13, 0.07);
+  --color-ink: #0b0b0d;
+  --color-muted: #6b6b76;
+  --color-faint: #9a9aa5;
+  --color-night: #0b0b0d;
+  --color-night-surface: #17171b;
+  --color-night-line: #2a2a31;
+  --color-night-ink: #f2f2f4;
+  --color-night-muted: #90909b;
+  /* Единственный акцент на весь интерфейс. Второй акцент это уже палитра
+     витрины, а она у каждого магазина своя. */
+  --color-focus: #0a84ff;
+  --color-ok: #17915f;
+  --color-warn: #b4530a;
+
+  /* Без этого токена Tailwind не генерирует rounded-pill вовсе, и все кнопки,
+     рассчитанные на скруглённые торцы, молча остаются прямоугольными. */
+  --radius-pill: 9999px;
+  /* Свои имена, а не подмена rounded-lg: встроенная шкала нужна мелким
+     элементам, эта — крупным плоскостям. Радиусы концентрические: внутренняя
+     карточка всегда мягче внешней ровно на свой отступ. */
+  --radius-field: 14px;
+  --radius-card: 20px;
+  --radius-sheet: 28px;
+
+  --font-display: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-hero: clamp(2.75rem, 6.2vw, 5rem);
+  --text-hero--line-height: 0.98;
+  --text-title: clamp(1.9rem, 3.6vw, 3rem);
+  --text-title--line-height: 1.06;
+  --text-lede: clamp(1.05rem, 1.6vw, 1.3rem);
+  --text-lede--line-height: 1.5;
+
+  /* Тени тонированы чернилами страницы, а не чистым чёрным: чёрный на белом
+     даёт грязный серый ореол. Ближняя тень рисует край, дальняя — вес. */
+  --shadow-hair: 0 1px 2px rgba(11, 11, 13, 0.05);
+  --shadow-soft:
+    0 1px 2px rgba(11, 11, 13, 0.04), 0 18px 44px -28px rgba(11, 11, 13, 0.45);
+  --shadow-lift:
+    0 2px 6px rgba(11, 11, 13, 0.05), 0 28px 60px -32px rgba(11, 11, 13, 0.5);
+  --shadow-sheet:
+    0 4px 12px rgba(11, 11, 13, 0.06), 0 50px 100px -50px rgba(11, 11, 13, 0.6);
+
+  /* Одна кривая на весь продукт. Пружина для того, что появляется,
+     мягкий выход для того, что просто меняет состояние. */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Липкая шапка не должна накрывать якорь, к которому вели. */
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    /* Onest на крупных кеглях просится в более плотный трекинг. */
+    letter-spacing: -0.028em;
+    text-wrap: balance;
+  }
+
+  /* Висячее слово в конце абзаца читается как обрыв. */
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-ground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Полоса прокрутки внутри панелей: тонкая и без стрелок, иначе она
+     перетягивает внимание с содержимого. */
+  .thin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+
+  .thin-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .thin-scroll::-webkit-scrollbar-thumb {
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-color: var(--color-line);
+  }
+
+  .thin-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* --------------------------------------------------------------- элементы
+   Кнопки, поля и карточки повторяются в трёх местах: на лендинге, в студии
+   и в кабинете. В кабинете разметка ещё и собирается строками в скрипте,
+   и держать там по восемь утилит на кнопку значит гарантированно получить
+   восемь разных кнопок. */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0.75rem 1.25rem;
+    white-space: nowrap;
+    transition:
+      transform 0.2s var(--ease-spring),
+      background-color 0.2s var(--ease-soft),
+      border-color 0.2s var(--ease-soft),
+      color 0.2s var(--ease-soft),
+      opacity 0.2s var(--ease-soft);
+  }
+
+  .btn:active {
+    /* Нажатие должно ощущаться нажатием: кнопка уходит под палец. */
+    transform: scale(0.975);
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    background: var(--color-ink);
+    color: var(--color-ground);
+    box-shadow: var(--shadow-hair);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    border: 1px solid var(--color-line);
+    background: var(--color-ground);
+    color: var(--color-ink);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--color-ink);
+  }
+
+  .btn-quiet {
+    color: var(--color-muted);
+  }
+
+  .btn-quiet:hover {
+    background: var(--color-sunken);
+    color: var(--color-ink);
+  }
+
+  .btn-sm {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  .btn-lg {
+    padding: 0.95rem 1.6rem;
+    font-size: 1rem;
+  }
+
+  /* Стрелка в кнопке живёт в своём кружке и уезжает по диагонали на наведении.
+     Голая стрелка рядом с текстом выглядит вставленной, а не нарисованной. */
+  .btn-arrow {
+    display: grid;
+    place-items: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    margin-right: -0.5rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    transition: transform 0.35s var(--ease-spring);
+  }
+
+  .btn:hover .btn-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-field);
+    background: var(--color-ground);
+    padding: 0.65rem 0.85rem;
+    font-size: 0.92rem;
+    outline: none;
+    transition:
+      border-color 0.2s var(--ease-soft),
+      box-shadow 0.2s var(--ease-soft);
+  }
+
+  .field:focus {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ink) 7%, transparent);
+  }
+
+  .field::placeholder {
+    color: var(--color-faint);
+  }
+
+  .field:disabled {
+    background: var(--color-surface);
+    color: var(--color-faint);
+  }
+
+  /* Карточка держится на волосяной линии, а не на тени: тень на всём подряд
+     это первый признак шаблона. Тень появляется там, где элемент правда
+     висит над страницей. */
+  .card {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: var(--color-ground);
+  }
+
+  .card-lift {
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Двойной кант: внешний поддон и вложенное ядро со своим радиусом. Так
+     собраны настоящие приборы, и так рамка предпросмотра выглядит железкой,
+     а не белым прямоугольником. */
+  .bezel {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sheet);
+    background: var(--color-surface);
+    padding: 0.5rem;
+    box-shadow: var(--shadow-lift);
+  }
+
+  .bezel-core {
+    overflow: hidden;
+    border-radius: calc(var(--radius-sheet) - 0.5rem);
+    background: var(--color-ground);
+    box-shadow: inset 0 0 0 1px var(--color-hair);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-pill);
+    padding: 0.35rem 0.8rem;
+    font-size: 0.82rem;
+    line-height: 1.2;
+    transition:
+      border-color 0.2s var(--ease-soft),
+      background-color 0.2s var(--ease-soft),
+      color 0.2s var(--ease-soft),
+      transform 0.2s var(--ease-spring);
+  }
+
+  button.chip:hover,
+  a.chip:hover {
+    border-color: var(--color-ink);
+    transform: translateY(-1px);
+  }
+
+  /* Выбранное состояние одно на весь продукт: вариант ответа, ширина экрана,
+     фильтр заказов, пункт меню. */
+  .chip[data-on],
+  [data-on] > .chip {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-ground);
+  }
+
+  /* Пункт бокового меню. Иконка слева, метка, счётчик справа. */
+  .rail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    border-radius: 12px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.9rem;
+    color: var(--color-muted);
+    text-align: left;
+    transition:
+      background-color 0.18s var(--ease-soft),
+      color 0.18s var(--ease-soft);
+  }
+
+  .rail-item:hover {
+    background: var(--color-sunken);
+    color: var(--color-ink);
+  }
+
+  .rail-item[data-on] {
+    background: var(--color-ink);
+    color: var(--color-ground);
+  }
+
+  .rail-item[data-on] .rail-badge {
+    background: var(--color-ground);
+    color: var(--color-ink);
+  }
+
+  .rail-badge {
+    margin-left: auto;
+    border-radius: var(--radius-pill);
+    background: var(--color-ink);
+    padding: 0.05rem 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    color: var(--color-ground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rail-group {
+    padding: 0.75rem 0.7rem 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+  }
+}
+
+/* Знак берёт цвет от текста рядом: чёрный в шапке, белый в тёмном футере.
+   Это маска, а не картинка, поэтому один файл работает на любом фоне,
+   а исходный JPEG с запечённым белым фоном для этого не годился. */
+@utility mark {
+  display: block;
+  aspect-ratio: 512 / 441;
+  background-color: currentColor;
+  -webkit-mask: url("/logo-mark.png") center / contain no-repeat;
+  mask: url("/logo-mark.png") center / contain no-repeat;
+}
+
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+/* Тихая сетка под героем и крупными блоками. Даёт глубину и не спорит
+   с витринами, в отличие от градиента. */
+@utility grid-veil {
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+/* Штриховка под тем же углом, что и росчерк в знаке. Ближе к фирменному
+   рисунку, чем плитка из самого логотипа: тиражированный знак читается
+   как водяной знак на бланке, а не как фактура. */
+@utility hatch {
+  background-image: repeating-linear-gradient(
+    38deg,
+    var(--color-line) 0 1px,
+    transparent 1px 13px
+  );
+}
+
+/* Уголки как в знаке: две скобки по диагонали. Четыре превращают блок
+   в рамку прицела, две только обозначают край. */
+@utility ticked {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border: 1px solid var(--color-line);
+    pointer-events: none;
+  }
+
+  &::before {
+    top: -1px;
+    left: -1px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  &::after {
+    right: -1px;
+    bottom: -1px;
+    border-top: 0;
+    border-left: 0;
+  }
+}
+
+/* Зерно поверх всей страницы.
+   Чистая заливка без фактуры выглядит не спокойной, а пустой: свет ей нечего
+   ловить. Слой лежит поверх содержимого, но не берёт события и не красит,
+   а только слегка приглушает. Фиксированный и один на страницу: зерно
+   в прокручиваемом контейнере это перерисовка на каждый пиксель. */
+@utility grain {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .grain {
+    display: none;
+  }
+}
+
+/* Секции проявляются один раз при первом появлении в кадре. */
+@utility rise {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s var(--ease-soft),
+    transform 0.7s var(--ease-soft);
+}
+
+.rise.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------------ окна
+   Модальные окна нужны и студии, и кабинету: имя проекта, привязка бота,
+   несохранённый черновик. Разметку рисует скрипт, поэтому стили общие. */
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sheet-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sheet-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  padding: 1.5rem;
+  place-items: center;
+  background: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  backdrop-filter: blur(14px);
+  animation: veil-in 0.24s var(--ease-soft) both;
+}
+
+/* Предупреждение о несохранённом черновике приходит сверху: оно про вкладку,
+   которую сейчас закроют, а не про то, что происходит в центре экрана. */
+.sheet-veil[data-top] {
+  align-items: start;
+  padding-top: 4.5rem;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 30rem;
+  border-radius: var(--radius-sheet);
+  background: var(--color-ground);
+  box-shadow: var(--shadow-sheet);
+  animation: sheet-in 0.32s var(--ease-spring) both;
+}
+
+.sheet-veil[data-top] .sheet {
+  animation-name: sheet-drop;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .sheet-veil {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- лента
+   Примеров больше, чем помещается в экран, а горизонтальную прокрутку
+   половина людей просто не замечает. Поэтому ряд едет сам и замирает под
+   курсором. Набор внутри дорожки лежит дважды, поэтому сдвиг ровно на
+   половину её ширины склеивает ленту в кольцо без стыка. */
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee {
+  overflow: hidden;
+}
+
+.marquee-track {
+  animation: marquee 90s linear infinite;
+  will-change: transform;
+}
+
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+  }
+
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* Три точки: работа идёт. Живут в глобальных стилях, потому что реплики
+   в разговоре создаёт скрипт, а до них scoped-стили не дотягиваются. */
+@keyframes dot-pulse {
+  0%,
+  75%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: dot-pulse 1.2s infinite ease-in-out;
+}
+
+.dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots i {
+    animation: none;
+  }
+}

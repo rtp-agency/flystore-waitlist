@@ -1,0 +1,519 @@
+---
+/**
+ * Рекламная страница листа ожидания.
+ *
+ * Отдельная от лендинга намеренно. На лендинге строка ввода ведёт в студию,
+ * то есть в продукт, которого у человека с рекламы ещё нет: он приходит
+ * холодным, за одну прокрутку решает, интересно ему или нет, и никакого
+ * «попробовать» мы ему сейчас предложить не можем. Здесь у страницы одно
+ * действие, и оно повторяется дважды: в первом экране и в конце.
+ *
+ * Цвет на странице настоящий, а не декоративный: это палитры, которыми
+ * собираются витрины. Придуманные для рекламы градиенты обещали бы продукт,
+ * которого нет, и первый же собранный магазин выглядел бы обманом.
+ */
+import Backdrop from "../components/Backdrop.astro";
+import Icon from "../components/Icon.astro";
+import ShopCard from "../components/ShopCard.astro";
+import WaitlistForm from "../components/WaitlistForm.astro";
+import Base from "../layouts/Base.astro";
+import { SHOPS } from "../lib/shops";
+
+// Ссылка на наш телеграм. Пусто значит ссылки в футере не будет.
+const tg = import.meta.env.PUBLIC_TG_LINK ?? "";
+const year = new Date().getFullYear();
+
+// Витрины первого экрана: три разные ниши и три разных характера. Один и тот же
+// макет в трёх цветах доказывал бы обратное тому, что написано рядом.
+const [atelier, rosa, volt] = SHOPS;
+
+// Палитры из реестра скелетов. Ровно те, что достаются настоящим магазинам.
+const spectrum = [
+  { name: "песок", hex: "#c8b08a" },
+  { name: "рассвет", hex: "#e8bfc3" },
+  { name: "глина", hex: "#b8767a" },
+  { name: "охра", hex: "#d9a441" },
+  { name: "трава", hex: "#8fae90" },
+  { name: "кобальт", hex: "#3d6bff" },
+  { name: "графит", hex: "#3c4250" },
+  { name: "полночь", hex: "#101216" },
+];
+
+const facts = [
+  { icon: "clock", text: "5 минут до витрины" },
+  { icon: "shield", text: "Бесплатно до $1 000 оборота" },
+  { icon: "card", text: "Карта не нужна" },
+];
+
+// Что человек получает. Плитки разного размера: список из четырёх одинаковых
+// прямоугольников читается как перечень свойств, а не как рассказ.
+const gains = [
+  {
+    icon: "window",
+    accent: "#8d7355",
+    span: "lg:col-span-4",
+    title: "Витрина со своим адресом",
+    text: "Каталог, карточки, корзина и оформление заказа. Не конструктор с блоками, а собранный сайт: палитра, шрифты и раскладка подобраны под вашу нишу.",
+    line: "shop.flystore.app сразу, свой домен позже",
+  },
+  {
+    icon: "telegram",
+    accent: "#1b2ea8",
+    span: "lg:col-span-2",
+    title: "Заказы приходят в чат",
+    text: "Бот пишет о каждом заказе, статусы меняются кнопками.",
+    line: "Панель администратора не нужна",
+  },
+  {
+    icon: "card",
+    accent: "#3f6b4a",
+    span: "lg:col-span-2",
+    title: "Деньги идут вам",
+    text: "Платёжка ваша, договор ваш. Комиссию берём отдельно, а не из платежа покупателя.",
+    line: "LiqPay, ЮKassa, Kaspi, bePaid",
+  },
+  {
+    icon: "box",
+    accent: "#9a6a1c",
+    span: "lg:col-span-4",
+    title: "Товары заводятся словами",
+    text: "Название, цена, фотография и остаток отправляются боту прямо в переписке. Сайт пересобирается сам, вручную ничего обновлять не нужно.",
+    line: "Импорт из Excel для больших каталогов",
+  },
+];
+
+const steps = [
+  {
+    icon: "chat",
+    title: "Опишите магазин",
+    text: "Одной фразой: чем торгуете и для кого. Чего не хватит, спросим сами.",
+  },
+  {
+    icon: "spark",
+    title: "Получите витрину",
+    text: "Скелет, палитра, тексты и первый товар собираются за пять минут.",
+  },
+  {
+    icon: "telegram",
+    title: "Работайте из Telegram",
+    text: "Каталог, заказы и выручка живут в одном чате на телефоне.",
+  },
+];
+
+const perks = [
+  {
+    icon: "shield",
+    title: "Бесплатно до $1 000 оборота",
+    text: "Первым по списку этот порог оставляем навсегда, даже когда поднимем цены остальным.",
+  },
+  {
+    icon: "user",
+    title: "Первый магазин соберём вместе",
+    text: "Разберём нишу, тексты и цены в переписке. Не «напишите в поддержку», а руками.",
+  },
+  {
+    icon: "bolt",
+    title: "Ваши правки вперёд очереди",
+    text: "Нужная платёжка, поле в карточке или скелет под вашу нишу приезжают раньше остального.",
+  },
+];
+
+const faq = [
+  {
+    q: "Сколько это будет стоить",
+    a: "Пока оборот магазина меньше $1 000, платить не нужно. Дальше подписка и небольшая комиссия с продаж, цифры покажем до того, как включим оплату. Записавшимся в список порог остаётся навсегда.",
+  },
+  {
+    q: "У меня нет домена и сайта",
+    a: "Домен не нужен. Магазин получает адрес вида shop.flystore.app и работает сразу. Свой домен можно подключить позже, когда захочется.",
+  },
+  {
+    q: "Я не разбираюсь в сайтах",
+    a: "Разбираться не придётся. Вы описываете магазин словами, дальше отвечаете на пару вопросов и правите текст репликой в чате: «сделай заголовок короче», «поставь тёмный фон».",
+  },
+  {
+    q: "Как я получу деньги за заказы",
+    a: "Платёжную систему вы подключаете свою, деньги идут прямо на ваш счёт. Пока платёжки нет, витрина принимает заказы наложенным платежом.",
+  },
+  {
+    q: "Когда откроете доступ",
+    a: "Открываем частями, по очереди из этого списка. Напишем в Telegram, как только дойдёт до вас, и поможем собрать первую витрину.",
+  },
+];
+---
+
+<Base
+  title="FlyStore. Магазин из одной фразы, ранний доступ"
+  description="Опишите магазин словами и получите готовую витрину со своим адресом. Товары и заказы живут в Telegram. Записывайтесь в лист ожидания: первым откроем доступ."
+>
+  <header class="sticky top-0 z-40 border-b border-transparent bg-ground/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-[1180px] items-center justify-between gap-6 px-6 py-3.5">
+      <a href="/" class="flex items-center gap-2.5">
+        <span class="mark h-7 w-auto text-ink" aria-hidden="true"></span>
+        <span class="font-display text-[1.05rem] font-bold tracking-tight">FlyStore</span>
+      </a>
+
+      <div class="flex items-center gap-3">
+        <span class="chip hidden border-line text-[0.72rem] text-muted sm:inline-flex">
+          <span class="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden="true"></span>
+          Скоро открытие
+        </span>
+        <a href="#join" class="btn btn-primary btn-sm">
+          Записаться
+          <span class="btn-arrow" aria-hidden="true">
+            <Icon name="arrowRight" size={13} />
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="relative isolate">
+    <Backdrop />
+
+    <!-- ------------------------------------------------------------ первый экран -->
+    <!-- Стопка витрин выходит за колонку намеренно, и на узком ноутбуке её
+         угол давал горизонтальную прокрутку страницы. Обрезаем по оси X:
+         скрыть нечего, а полоса внизу экрана дороже трёх пикселей. -->
+    <section class="relative overflow-x-clip">
+      <div
+        class="mx-auto grid max-w-[1180px] items-center gap-16 px-6 pt-12 pb-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14 lg:pt-16 lg:pb-28"
+      >
+        <div>
+          <p class="chip inline-flex border-line text-[0.72rem] text-muted">
+            <span class="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden="true"></span>
+            Лист ожидания открыт
+          </p>
+
+          <h1 class="mt-6 text-hero font-extrabold">
+            Опиши магазин.<br />Получи сайт.
+          </h1>
+
+          <p class="mt-6 max-w-[46ch] text-lede text-muted">
+            Пять минут вместо двух недель с разработчиком. Витрина со своим адресом, каталог
+            и заказы прямо в Telegram. Записывайтесь, первым откроем доступ.
+          </p>
+
+          <div class="mt-8 max-w-[34rem] rounded-sheet border border-line bg-ground/90 p-5 shadow-soft sm:p-6">
+            <WaitlistForm id="hero" cta="Занять место в списке" />
+          </div>
+
+          <ul class="mt-7 flex flex-wrap gap-x-6 gap-y-2">
+            {
+              facts.map((fact) => (
+                <li class="flex items-center gap-2 font-mono text-[0.7rem] tracking-wide text-faint">
+                  <Icon name={fact.icon} size={13} />
+                  {fact.text}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <!-- Три витрины стопкой: продукт показывает себя сам. Наклон и нахлёст
+             только на широком экране, на телефоне остаётся одна карточка:
+             повёрнутые слои там перекрывают друг другу нажатия. -->
+        <div class="relative mx-auto hidden h-[30rem] w-full max-w-[34rem] lg:block">
+          <div
+            class="absolute top-14 -left-2 w-[15.5rem] -rotate-[7deg] opacity-95 transition-transform duration-700 ease-soft hover:-translate-y-2 xl:-left-6"
+          >
+            <ShopCard shop={rosa} />
+          </div>
+          <div
+            class="absolute top-20 -right-2 w-[15.5rem] rotate-[6deg] opacity-95 transition-transform duration-700 ease-soft hover:-translate-y-2 xl:-right-8"
+          >
+            <ShopCard shop={volt} />
+          </div>
+          <div
+            class="absolute top-0 left-1/2 w-[19.5rem] -translate-x-1/2 transition-transform duration-700 ease-soft hover:-translate-y-2"
+          >
+            <ShopCard shop={atelier} />
+          </div>
+
+          <!-- Уведомление о заказе: то, ради чего всё и затевается. -->
+          <div
+            class="absolute -bottom-2 left-2 w-[15rem] rounded-2xl border border-line bg-ground p-4 shadow-lift"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-focus" aria-hidden="true">
+                <Icon name="telegram" size={15} />
+              </span>
+              <span class="eyebrow">Telegram</span>
+              <span class="ml-auto h-1.5 w-1.5 rounded-full bg-ok" aria-hidden="true"></span>
+            </div>
+            <p class="mt-2.5 text-[0.9rem] leading-snug">Новый заказ №1042</p>
+            <p class="mt-0.5 font-display text-[1rem] font-bold tabular-nums">$148.00</p>
+            <div class="mt-3 flex gap-1.5">
+              <span class="rounded-lg bg-ink px-2.5 py-1 text-xs text-ground">Принять</span>
+              <span class="rounded-lg bg-surface px-2.5 py-1 text-xs">Отменить</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mx-auto w-full max-w-[21rem] lg:hidden">
+          <ShopCard shop={atelier} />
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------- палитры -->
+    <section class="border-y border-line bg-surface/60">
+      <div class="mx-auto max-w-[1180px] px-6 py-10">
+        <div class="rise flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+          <p class="eyebrow">Палитра подбирается под нишу</p>
+          <p class="max-w-[52ch] text-[0.9rem] text-muted">
+            Косметике достаётся рассвет, электронике кобальт, керамике трава. Цвет можно
+            назвать словами и поменять одной репликой.
+          </p>
+        </div>
+
+        <ul class="rise mt-6 grid grid-cols-4 gap-2 sm:grid-cols-8 sm:gap-3">
+          {
+            spectrum.map((tone) => (
+              <li>
+                <span
+                  class="block h-14 rounded-xl shadow-hair sm:h-16"
+                  style={`background:${tone.hex}`}
+                  aria-hidden="true"
+                />
+                <span class="mt-2 block font-mono text-[0.62rem] tracking-wide text-faint">
+                  {tone.name}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- что получаете -->
+    <section class="relative">
+      <div class="mx-auto max-w-[1180px] px-6 py-24 lg:py-32">
+        <div class="rise max-w-[46ch]">
+          <p class="eyebrow">Что вы получаете</p>
+          <h2 class="mt-4 text-title">Магазин целиком, а не заготовка</h2>
+        </div>
+
+        <div class="mt-12 grid gap-4 lg:grid-cols-6">
+          {
+            gains.map((gain) => (
+              <article
+                class:list={["rise ticked relative overflow-hidden p-7 lg:p-8", gain.span]}
+                style={`background:color-mix(in srgb, ${gain.accent} 7%, #fff);border:1px solid color-mix(in srgb, ${gain.accent} 20%, transparent);border-radius:var(--radius-sheet)`}
+              >
+                <span
+                  class="grid h-10 w-10 place-items-center rounded-pill text-white"
+                  style={`background:${gain.accent}`}
+                >
+                  <Icon name={gain.icon} size={18} />
+                </span>
+                <h3 class="mt-5 text-[1.22rem]">{gain.title}</h3>
+                <p class="mt-3 max-w-[46ch] text-[0.96rem] leading-relaxed text-muted">
+                  {gain.text}
+                </p>
+                <p
+                  class="mt-5 font-mono text-[0.68rem] tracking-wide"
+                  style={`color:${gain.accent}`}
+                >
+                  {gain.line}
+                </p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------- шаги -->
+    <section class="border-y border-line bg-surface/70">
+      <div class="mx-auto max-w-[1180px] px-6 py-24 lg:py-32">
+        <div class="rise max-w-[42ch]">
+          <p class="eyebrow">Как это работает</p>
+          <h2 class="mt-4 text-title">Три шага, ни одной настройки</h2>
+        </div>
+
+        <ol class="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+          {
+            steps.map((step, i) => (
+              <li class="rise">
+                <div class="flex items-center gap-3">
+                  <span class="font-mono text-[0.72rem] text-faint">
+                    0{i + 1}
+                  </span>
+                  <span class="h-px flex-1 bg-line" aria-hidden="true" />
+                  <span class="text-ink">
+                    <Icon name={step.icon} size={17} />
+                  </span>
+                </div>
+                <h3 class="mt-5 text-[1.22rem]">{step.title}</h3>
+                <p class="mt-2.5 max-w-[34ch] text-[0.96rem] leading-relaxed text-muted">
+                  {step.text}
+                </p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ примеры -->
+    <section class="overflow-hidden">
+      <div class="mx-auto max-w-[1180px] px-6 pt-24 lg:pt-32">
+        <div class="rise flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p class="eyebrow">Примеры</p>
+            <h2 class="mt-4 max-w-[20ch] text-title">Одна фраза, разные магазины</h2>
+          </div>
+          <p class="max-w-[38ch] text-[0.96rem] leading-relaxed text-muted">
+            Скелет решает раскладку, а не только цвет: каталог, витрина-журнал, распродажа,
+            одностраничник и мгновенная выдача это пять разных страниц.
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="marquee mt-14 pb-24 lg:mt-16 lg:pb-32 [mask-image:linear-gradient(90deg,transparent,#000_5%,#000_95%,transparent)]"
+      >
+        <div class="marquee-track flex w-max gap-5 px-6">
+          {
+            [false, true].map((mute) =>
+              SHOPS.map((shop) => (
+                <article class="w-[19rem] shrink-0 sm:w-[21rem]" aria-hidden={mute}>
+                  <ShopCard shop={shop} />
+                  <p class="mt-4 font-mono text-[0.72rem] text-muted">«{shop.prompt}»</p>
+                  <p class="mt-1.5 text-[0.78rem] text-faint">{shop.tags}</p>
+                </article>
+              )),
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------- зачем ранний доступ -->
+    <section class="border-y border-line bg-surface/70">
+      <div class="mx-auto max-w-[1180px] px-6 py-24 lg:py-32">
+        <div class="rise flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p class="eyebrow">Ранний доступ</p>
+            <h2 class="mt-4 max-w-[22ch] text-title">Что даёт место в списке</h2>
+          </div>
+
+        </div>
+
+        <div class="mt-12 grid gap-4 md:grid-cols-3">
+          {
+            perks.map((perk) => (
+              <article class="rise card p-7">
+                <span class="grid h-10 w-10 place-items-center rounded-pill bg-ink text-ground">
+                  <Icon name={perk.icon} size={18} />
+                </span>
+                <h3 class="mt-5 text-[1.15rem]">{perk.title}</h3>
+                <p class="mt-2.5 text-[0.94rem] leading-relaxed text-muted">{perk.text}</p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------- FAQ -->
+    <section class="relative">
+      <div class="mx-auto max-w-[820px] px-6 py-24 lg:py-32">
+        <div class="rise">
+          <p class="eyebrow">Вопросы</p>
+          <h2 class="mt-4 text-title">Коротко о главном</h2>
+        </div>
+
+        <div class="rise mt-10 divide-y divide-line border-y border-line">
+          {
+            faq.map((item) => (
+              <details class="group py-5">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-[1.05rem] font-medium">
+                  {item.q}
+                  <span
+                    class="shrink-0 text-faint transition-transform duration-300 ease-soft group-open:rotate-180"
+                    aria-hidden="true"
+                  >
+                    <Icon name="chevronDown" size={16} />
+                  </span>
+                </summary>
+                <p class="mt-3 max-w-[62ch] text-[0.96rem] leading-relaxed text-muted">
+                  {item.a}
+                </p>
+              </details>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------- запись, низ -->
+    <section id="join" class="relative overflow-hidden bg-night text-night-ink">
+      <span
+        class="mark pointer-events-none absolute -top-24 left-1/2 h-[560px] w-auto -translate-x-1/2 text-night-line opacity-60"
+        aria-hidden="true"></span>
+
+      <div
+        class="relative mx-auto grid max-w-[1180px] items-center gap-14 px-6 py-24 lg:grid-cols-2 lg:py-32"
+      >
+        <div>
+          <p class="eyebrow text-night-muted">Лист ожидания</p>
+          <h2 class="mt-4 max-w-[18ch] text-title text-night-ink">
+            Займите место, пока список открыт
+          </h2>
+          <p class="mt-5 max-w-[42ch] text-lede text-night-muted">
+            Доступ открываем частями. Напишем в Telegram, когда дойдёт очередь, и поможем
+            собрать первую витрину.
+          </p>
+
+          <ul class="mt-8 space-y-2.5">
+            {
+              [
+                "Порог бесплатного тарифа остаётся навсегда",
+                "Первый магазин собираем вместе",
+                "Никакого спама, одно сообщение",
+              ].map((line) => (
+                <li class="flex items-center gap-3 text-[0.94rem] text-night-muted">
+                  <span class="text-ok">
+                    <Icon name="check" size={15} />
+                  </span>
+                  {line}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="rounded-sheet border border-night-line bg-night-surface p-6 sm:p-8">
+          <WaitlistForm id="join" tone="night" cta="Записаться" />
+        </div>
+      </div>
+    </section>
+
+    <footer class="border-t border-line">
+      <div
+        class="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 px-6 py-8"
+      >
+        <div class="flex items-center gap-2.5">
+          <span class="mark h-6 w-auto text-ink" aria-hidden="true"></span>
+          <span class="font-display text-[0.98rem] font-bold tracking-tight">FlyStore</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-5 text-[0.88rem] text-muted">
+          {
+            tg && (
+              <a href={tg} class="transition-colors hover:text-ink" target="_blank" rel="noopener">
+                Телеграм
+              </a>
+            )
+          }
+          <a href="mailto:hi@flystore.app" class="transition-colors hover:text-ink">
+            hi@flystore.app
+          </a>
+          <span class="font-mono text-xs text-faint">© {year}</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+</Base>

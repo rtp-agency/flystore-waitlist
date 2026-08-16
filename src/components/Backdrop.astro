@@ -1,0 +1,80 @@
+---
+/**
+ * Фон лендинга: сетка, рельсы, крылья и частицы.
+ *
+ * Поля по бокам от колонки в 1180 пикселей на широком мониторе занимают
+ * половину экрана и до сих пор были просто белыми. Здесь они получают
+ * разметку: сетка задаёт ритм, вертикальные рельсы держат колонку, а крылья
+ * из знака и точки не дают полю читаться пустым листом.
+ *
+ * Слой лежит под содержимым и не берёт события. Секции с собственным фоном
+ * сделаны полупрозрачными, поэтому сетка идёт сквозь всю страницу, а не
+ * обрывается на первой же серой полосе.
+ */
+
+// Крылья по бокам: три штуки на разной высоте, зеркальные и разного размера.
+// Знак это маска, поэтому цвет берётся от текста и остаётся в палитре.
+const wings = [
+  { side: "left", top: "8%", size: 460, turn: -14, tone: "text-line" },
+  { side: "right", top: "34%", size: 620, turn: 166, tone: "text-line/70" },
+  { side: "left", top: "62%", size: 520, turn: -8, tone: "text-line/60" },
+  { side: "right", top: "84%", size: 400, turn: 172, tone: "text-line/50" },
+];
+
+// Частицы: редкие точки по полям. Ровно столько, чтобы поле выглядело
+// разлинованным, а не засеянным конфетти.
+const dots = [
+  { x: "6%", y: "14%", size: 5 },
+  { x: "11%", y: "27%", size: 3 },
+  { x: "4%", y: "41%", size: 4 },
+  { x: "9%", y: "58%", size: 3 },
+  { x: "5%", y: "77%", size: 5 },
+  { x: "93%", y: "11%", size: 4 },
+  { x: "88%", y: "23%", size: 3 },
+  { x: "95%", y: "46%", size: 5 },
+  { x: "90%", y: "66%", size: 3 },
+  { x: "94%", y: "88%", size: 4 },
+];
+---
+
+<div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+  <!-- Мелкая сетка на всю длину страницы: к низу тает, но не пропадает. -->
+  <div
+    class="grid-veil absolute inset-0 opacity-[0.85] [mask-image:linear-gradient(180deg,#000_0%,#000_72%,rgba(0,0,0,.35)_100%)]"
+  >
+  </div>
+
+  <!-- Крупная сетка поверх мелкой: даёт второй, редкий ритм. -->
+  <div
+    class="absolute inset-0 opacity-70"
+    style="background-image:linear-gradient(var(--color-line) 1px,transparent 1px),linear-gradient(90deg,var(--color-line) 1px,transparent 1px);background-size:288px 288px"
+  >
+  </div>
+
+  <!-- Рельсы: границы колонки и две внутренние линии. Видны там, где колонка
+       уже экрана, то есть ровно на широких мониторах. -->
+  <div class="absolute inset-y-0 left-1/2 hidden w-[1180px] -translate-x-1/2 xl:block">
+    <span class="absolute inset-y-0 left-0 w-px bg-line"></span>
+    <span class="absolute inset-y-0 right-0 w-px bg-line"></span>
+    <span class="absolute inset-y-0 left-1/3 w-px bg-line/60"></span>
+    <span class="absolute inset-y-0 left-2/3 w-px bg-line/60"></span>
+  </div>
+
+  {
+    wings.map((wing) => (
+      <span
+        class:list={["mark absolute w-auto", wing.tone]}
+        style={`${wing.side}:-6%;top:${wing.top};height:${wing.size}px;transform:rotate(${wing.turn}deg);opacity:.5`}
+      />
+    ))
+  }
+
+  {
+    dots.map((dot) => (
+      <span
+        class="absolute rounded-full bg-faint/40"
+        style={`left:${dot.x};top:${dot.y};width:${dot.size}px;height:${dot.size}px`}
+      />
+    ))
+  }
+</div>

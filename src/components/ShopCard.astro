@@ -1,0 +1,43 @@
+---
+/**
+ * Витрина в рамке браузера.
+ *
+ * Общая деталь галереи и рекламной страницы: и там, и там макет должен читаться
+ * как настоящий сайт, а не как картинка. Рамку рисует двойной кант, адрес в ней
+ * настоящий по форме, и в тот же слот встанет снимок живого магазина, когда
+ * он появится.
+ */
+import type { Shop } from "../lib/shops";
+import ShopMock from "./ShopMock.astro";
+
+interface Props {
+  shop: Shop;
+  class?: string;
+}
+
+const { shop, class: cls = "" } = Astro.props;
+---
+
+<div class:list={["bezel bg-ground", cls]}>
+  <div class="bezel-core">
+    <div class="flex items-center gap-1.5 border-b border-line px-3 py-2">
+      <span class="h-2 w-2 rounded-full bg-sunken"></span>
+      <span class="h-2 w-2 rounded-full bg-sunken"></span>
+      <span class="h-2 w-2 rounded-full bg-sunken"></span>
+      <span class="ml-2 truncate font-mono text-[0.62rem] text-faint">{shop.host}</span>
+    </div>
+
+    {
+      shop.shot ? (
+        <img
+          src={shop.shot}
+          alt={`Витрина магазина ${shop.name}`}
+          loading="lazy"
+          class="h-[20.5rem] w-full object-cover object-top"
+        />
+      ) : (
+        <ShopMock shop={shop} />
+      )
+    }
+  </div>
+</div>

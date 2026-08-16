@@ -1,0 +1,390 @@
+---
+/**
+ * Форма листа ожидания.
+ *
+ * Три поля и одна кнопка. Каждое лишнее поле на холодном трафике стоит части
+ * заявок, поэтому обязательных ровно два: имя и один контакт.
+ *
+ * Контакт один, но двух видов. Отдельные поля «телеграм» и «телефон» человек
+ * читает как «заполните оба», а свободное «как с вами связаться» приносит
+ * «вайбер» и «звоните после шести»: и то и другое мимо нас.
+ *
+ * Форма стоит на странице дважды, вверху и внизу. Скрипт один на обе: заявка
+ * ушла с любой, обе показывают, что человек уже в списке.
+ */
+import Icon from "./Icon.astro";
+
+interface Props {
+  id: string;
+  /** Тёмная секция в конце страницы: поля там на светлом фоне выглядят дырами. */
+  tone?: "light" | "night";
+  cta?: string;
+}
+
+const { id, tone = "light", cta = "Занять место" } = Astro.props;
+
+// Ссылка на наш телеграм. Пусто значит кнопки после отправки не будет:
+// вести человека в пустой чат хуже, чем не вести никуда.
+const tg = import.meta.env.PUBLIC_TG_LINK ?? "";
+---
+
+<div class="wl" data-wl data-tone={tone}>
+  <form class="wl-form space-y-3" novalidate>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="wl-label" for={`wl-name-${id}`}>Как вас зовут</label>
+        <input
+          id={`wl-name-${id}`}
+          class="field wl-name mt-1.5"
+          type="text"
+          name="name"
+          autocomplete="given-name"
+          placeholder="Имя"
+          maxlength="80"
+          required
+        />
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between gap-3">
+          <label class="wl-label" for={`wl-contact-${id}`}>Контакт</label>
+
+          <div class="wl-kinds inline-flex rounded-pill border border-line bg-surface p-0.5 text-[0.72rem]">
+            <label class="wl-kind">
+              <input class="sr-only" type="radio" name={`wl-kind-${id}`} value="telegram" checked />
+              <span>Telegram</span>
+            </label>
+            <label class="wl-kind">
+              <input class="sr-only" type="radio" name={`wl-kind-${id}`} value="phone" />
+              <span>Телефон</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field wl-slot mt-1.5 flex items-center p-0">
+          <span class="wl-prefix pl-3 font-mono text-[0.9rem] text-faint" aria-hidden="true">@</span>
+          <input
+            id={`wl-contact-${id}`}
+            class="wl-contact w-full bg-transparent py-2.5 pr-3 pl-1 text-[0.92rem] outline-none"
+            type="text"
+            name="contact"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="username"
+            maxlength="120"
+            required
+          />
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="wl-label" for={`wl-email-${id}`}>
+        Почта <span class="text-faint">необязательно</span>
+      </label>
+      <input
+        id={`wl-email-${id}`}
+        class="field wl-email mt-1.5"
+        type="email"
+        name="email"
+        autocomplete="email"
+        placeholder="почта, если так удобнее"
+        maxlength="255"
+      />
+    </div>
+
+    {/* Приманка для роботов. Человек её не видит и не доберётся табом. */}
+    <div class="hidden" aria-hidden="true">
+      <label>
+        Компания
+        <input class="wl-bait" type="text" name="company" tabindex="-1" autocomplete="off" />
+      </label>
+    </div>
+
+    <p class="wl-error hidden text-[0.84rem] text-warn" role="alert"></p>
+
+    <button type="submit" class="btn btn-primary btn-lg w-full">
+      <span class="wl-cta">{cta}</span>
+      <span class="btn-arrow" aria-hidden="true">
+        <Icon name="arrowRight" size={14} />
+      </span>
+    </button>
+
+    <p class="wl-fine text-center text-[0.78rem] leading-relaxed text-faint">
+      Напишем один раз, когда откроем доступ. Карта не нужна.
+    </p>
+  </form>
+
+  <div class="wl-done hidden">
+    <div class="flex items-center gap-3">
+      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-pill bg-ok text-white">
+        <Icon name="check" size={16} />
+      </span>
+      <div>
+        <p class="font-display text-[1.1rem] font-bold">Вы в списке</p>
+        <p class="wl-seat text-[0.88rem] text-muted">Заявка у нас, место закреплено за вами</p>
+      </div>
+    </div>
+    <p class="mt-4 text-[0.9rem] leading-relaxed text-muted">
+      Напишем в Telegram, как только откроем доступ, и поможем собрать первую витрину.
+    </p>
+    {
+      tg && (
+        <a class="btn btn-ghost mt-4 w-full" href={tg} target="_blank" rel="noopener">
+          <Icon name="telegram" size={15} />
+          Мы в Telegram
+        </a>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .wl-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* Переключатель вида контакта. Выбранная половина красится сама: состояние
+     держит радиокнопка, а не класс из скрипта, поэтому клавиатура и читалки
+     работают без единой строки на них. */
+  .wl-kind {
+    cursor: pointer;
+    border-radius: var(--radius-pill);
+    padding: 0.3rem 0.7rem;
+    color: var(--color-muted);
+    transition:
+      background-color 0.2s var(--ease-soft),
+      color 0.2s var(--ease-soft);
+  }
+
+  .wl-kind:has(:checked) {
+    background: var(--color-ink);
+    color: var(--color-ground);
+  }
+
+  /* Поле с приставкой: рамку рисует обёртка, фокус живёт на вложенном вводе,
+     поэтому подсветку берёт focus-within, а не focus. */
+  .wl-slot:focus-within {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ink) 7%, transparent);
+  }
+
+  .wl-slot:focus-within :focus-visible {
+    outline: none;
+  }
+
+  /* Тёмная секция. Поля на белом фоне в ней выглядели бы вырезанными дырами. */
+  [data-tone="night"] .wl-label {
+    color: var(--color-night-muted);
+  }
+
+  [data-tone="night"] .field {
+    border-color: var(--color-night-line);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-night-ink);
+  }
+
+  [data-tone="night"] .field::placeholder {
+    color: #6c7079;
+  }
+
+  [data-tone="night"] .wl-slot:focus-within {
+    border-color: var(--color-night-ink);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+  }
+
+  [data-tone="night"] .wl-kind {
+    color: var(--color-night-muted);
+  }
+
+  [data-tone="night"] .wl-kind:has(:checked) {
+    background: var(--color-night-ink);
+    color: var(--color-night);
+  }
+
+  [data-tone="night"] .wl-kinds {
+    border-color: var(--color-night-line);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  [data-tone="night"] .btn-primary {
+    background: var(--color-night-ink);
+    color: var(--color-night);
+  }
+
+  [data-tone="night"] .btn-ghost {
+    border-color: var(--color-night-line);
+    background: transparent;
+    color: var(--color-night-ink);
+  }
+
+  [data-tone="night"] .btn-ghost:hover {
+    border-color: var(--color-night-ink);
+  }
+
+  [data-tone="night"] .wl-fine,
+  [data-tone="night"] .wl-seat {
+    color: var(--color-night-muted);
+  }
+
+  [data-tone="night"] .wl-done p:not(.wl-seat) {
+    color: var(--color-night-ink);
+  }
+</style>
+
+<script>
+  /**
+   * Отправка заявки.
+   *
+   * Проверки те же, что на сервере, и берутся из того же файла: разъехавшаяся
+   * проверка это либо отказ человеку с правильным юзернеймом, либо мусор
+   * в заявке. Скрипт один на все формы страницы: Astro склеивает одинаковые
+   * блоки в один.
+   */
+  import { normalizePhone, normalizeTelegram } from "../../shared/lead";
+
+  const DONE_KEY = "flystore:waitlist";
+  const opened = Date.now();
+
+  const roots = Array.from(document.querySelectorAll<HTMLElement>("[data-wl]"));
+
+  /** Показывает «вы в списке» во всех формах сразу. */
+  const settle = () => {
+    for (const root of roots) {
+      root.querySelector<HTMLFormElement>(".wl-form")?.classList.add("hidden");
+      root.querySelector<HTMLElement>(".wl-done")?.classList.remove("hidden");
+    }
+    try {
+      window.localStorage.setItem(DONE_KEY, "1");
+    } catch {
+      // Приватный режим. Заявка уже принята, и напоминание об этом
+      // не повод показывать человеку ошибку.
+    }
+  };
+
+  // Человек уже записывался и вернулся по той же рекламе.
+  try {
+    if (window.localStorage.getItem(DONE_KEY)) settle();
+  } catch {
+    // Хранилище недоступно, показываем обычную форму.
+  }
+
+  for (const root of roots) {
+    const form = root.querySelector<HTMLFormElement>(".wl-form");
+    const name = root.querySelector<HTMLInputElement>(".wl-name");
+    const contact = root.querySelector<HTMLInputElement>(".wl-contact");
+    const email = root.querySelector<HTMLInputElement>(".wl-email");
+    const bait = root.querySelector<HTMLInputElement>(".wl-bait");
+    const prefix = root.querySelector<HTMLElement>(".wl-prefix");
+    const error = root.querySelector<HTMLElement>(".wl-error");
+    const button = root.querySelector<HTMLButtonElement>("button[type=submit]");
+    const label = root.querySelector<HTMLElement>(".wl-cta");
+    if (!form || !name || !contact || !email || !prefix || !error || !button || !label) continue;
+
+    const kinds = Array.from(root.querySelectorAll<HTMLInputElement>("input[type=radio]"));
+    const kind = () => kinds.find((item) => item.checked)?.value ?? "telegram";
+
+    const dress = () => {
+      const telegram = kind() === "telegram";
+      prefix.textContent = telegram ? "@" : "+";
+      contact.placeholder = telegram ? "username" : "380 67 123 45 67";
+      contact.inputMode = telegram ? "text" : "tel";
+      contact.type = telegram ? "text" : "tel";
+    };
+
+    for (const item of kinds) {
+      item.addEventListener("change", () => {
+        dress();
+        contact.focus();
+      });
+    }
+    dress();
+
+    const complain = (message: string, field?: HTMLInputElement) => {
+      error.textContent = message;
+      error.classList.remove("hidden");
+      field?.focus();
+    };
+
+    const hush = () => error.classList.add("hidden");
+    name.addEventListener("input", hush);
+    contact.addEventListener("input", hush);
+    email.addEventListener("input", hush);
+
+    let sending = false;
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (sending) return;
+
+      const person = name.value.trim();
+      if (person.length < 2) {
+        complain("Напишите, как к вам обращаться", name);
+        return;
+      }
+
+      const telegram = kind() === "telegram";
+      const value = telegram ? normalizeTelegram(contact.value) : normalizePhone(contact.value);
+      if (!value) {
+        complain(
+          telegram
+            ? "Юзернейм состоит из латиницы, цифр и подчёркиваний"
+            : "Номер нужен с кодом страны и целиком",
+          contact,
+        );
+        return;
+      }
+
+      const post = email.value.trim();
+      if (post && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(post)) {
+        complain("Почта с опечаткой", email);
+        return;
+      }
+
+      sending = true;
+      button.setAttribute("aria-disabled", "true");
+      const said = label.textContent;
+      label.textContent = "Отправляем";
+
+      try {
+        const response = await fetch("/api/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: person,
+            contact_kind: telegram ? "telegram" : "phone",
+            contact: value,
+            email: post || null,
+            // Откуда пришёл человек: адрес с utm-метками, как есть.
+            source: `${location.pathname}${location.search}`.slice(0, 200),
+            company: bait?.value ?? "",
+            // Сколько человек провёл на странице до отправки. Робот заполняет
+            // форму мгновенно, и по этому его видно без капчи.
+            elapsed: Date.now() - opened,
+          }),
+        });
+        const body = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          complain(body?.error?.message ?? "Не получилось отправить. Попробуйте ещё раз");
+          return;
+        }
+
+        settle();
+      } catch {
+        complain("Сеть не отвечает. Попробуйте ещё раз через минуту");
+      } finally {
+        sending = false;
+        button.removeAttribute("aria-disabled");
+        label.textContent = said;
+      }
+    });
+  }
+</script>
