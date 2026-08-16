@@ -42,7 +42,7 @@ npm run local             # http://localhost:4321, заявки уходят п�
 хостинга. Лежат обе одновременно намеренно: хостинг видит свою и не замечает чужую,
 переезд не требует правок в коде.
 
-**Cloudflare Pages** (`functions/api/join.ts`)
+**Cloudflare Pages** (`functions/api/join.js`)
 
 * Build command: `npm run build`, output directory: `dist`, root directory: `waitlist`
   (если репозиторий общий с основным проектом).
@@ -50,7 +50,7 @@ npm run local             # http://localhost:4321, заявки уходят п�
   secret.
 * Папку `functions` Pages подхватывает сам, настраивать нечего.
 
-**Vercel** (`api/join.ts`)
+**Vercel** (`api/join.js`)
 
 * Framework preset Astro, остальное по умолчанию.
 * Переменные там же, Settings, Environment variables.
@@ -104,7 +104,7 @@ Telegram: @kolya_dev
 |---|---|
 | [src/pages/index.astro](src/pages/index.astro) | вся страница: тексты, секции, порядок |
 | [src/components/WaitlistForm.astro](src/components/WaitlistForm.astro) | форма и её поведение |
-| [shared/lead.ts](shared/lead.ts) | проверка заявки и отправка в Telegram, общая для всех |
+| [shared/lead.js](shared/lead.js) | проверка заявки и отправка в Telegram, общая для всех |
 | [src/lib/shops.ts](src/lib/shops.ts) | макеты витрин в примерах |
 | [src/styles/global.css](src/styles/global.css) | кнопки, поля, карточки, фактура |
 
@@ -112,5 +112,5 @@ Telegram: @kolya_dev
 правила те же, что в основном проекте.
 
 ```bash
-npm test     # проверки разбора заявки, Node 24 читает TypeScript сам
+npm test     # проверки разбора заявки, без сборки и без зависимостей
 ```

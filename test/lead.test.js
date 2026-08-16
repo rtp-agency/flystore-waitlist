@@ -5,12 +5,19 @@
  * роботов и экранирование в сообщении. Форма может выглядеть как угодно, а вот
  * заявка с чужим html внутри портит нам чат один раз и навсегда.
  *
- * Запуск: npm test. Node 24 читает TypeScript сам, сборка не нужна.
+ * Запуск: npm test.
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { checkLead, cleanName, handleLead, leadMessage, normalizePhone, normalizeTelegram } from "../shared/lead.ts";
+import {
+  checkLead,
+  cleanName,
+  handleLead,
+  leadMessage,
+  normalizePhone,
+  normalizeTelegram,
+} from "../shared/lead.js";
 
 test("юзернейм принимается в любом виде, в каком его копируют", () => {
   for (const given of ["kolya_dev", "@kolya_dev", "t.me/kolya_dev", "https://t.me/kolya_dev/"]) {
@@ -52,7 +59,12 @@ test("заявка собирается целиком", () => {
 });
 
 test("почта с опечаткой не проходит, пустая проходит", () => {
-  const bad = checkLead({ name: "Коля", contact_kind: "telegram", contact: "kolya_dev", email: "почта" });
+  const bad = checkLead({
+    name: "Коля",
+    contact_kind: "telegram",
+    contact: "kolya_dev",
+    email: "почта",
+  });
   assert.equal(bad.ok, false);
 
   const fine = checkLead({ name: "Коля", contact_kind: "telegram", contact: "kolya_dev" });
@@ -87,13 +99,13 @@ test("приманка и мгновенная отправка отвечают
 
 test("недоступный чат это отказ, а один доступный из двух это успех", async () => {
   const real = globalThis.fetch;
-  const seen: string[] = [];
+  const seen = [];
   // Первый получатель не нажимал «Старт», второй нажимал.
-  globalThis.fetch = (async (_url: string, init: { body: string }) => {
+  globalThis.fetch = async (_url, init) => {
     const chat = String(JSON.parse(init.body).chat_id);
     seen.push(chat);
-    return { ok: chat === "2" } as Response;
-  }) as typeof fetch;
+    return { ok: chat === "2" };
+  };
 
   try {
     const lead = { name: "Коля", contact_kind: "telegram", contact: "kolya_dev", elapsed: 9000 };

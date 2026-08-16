@@ -248,7 +248,7 @@ const tg = import.meta.env.PUBLIC_TG_LINK ?? "";
    * в заявке. Скрипт один на все формы страницы: Astro склеивает одинаковые
    * блоки в один.
    */
-  import { normalizePhone, normalizeTelegram } from "../../shared/lead";
+  import { normalizePhone, normalizeTelegram } from "../../shared/lead.js";
 
   const DONE_KEY = "flystore:waitlist";
   const opened = Date.now();

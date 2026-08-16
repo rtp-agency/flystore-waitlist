@@ -13,7 +13,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 
-import { handleLead } from "../shared/lead.ts";
+import { handleLead } from "../shared/lead.js";
 
 const ROOT = new URL("../dist/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 const PORT = Number(process.env.PORT ?? 4321);

@@ -1,24 +1,23 @@
 /**
  * Заявка: разбор, проверка и отправка нам в Telegram.
  *
- * Лежит отдельно от обработчиков, потому что обработчиков два: один под
- * Cloudflare Pages, второй под Vercel. Отличаются они только тем, как получить
- * тело запроса и как ответить, а всё остальное обязано быть общим: разъехавшаяся
- * проверка это заявка, которая принята на одном хостинге и отклонена на другом.
+ * Лежит отдельно от обработчиков, потому что обработчиков два: один под Vercel,
+ * второй под Cloudflare Pages. Отличаются они только тем, как получить тело
+ * запроса и как ответить, а всё остальное обязано быть общим: разъехавшаяся
+ * проверка это заявка, принятая на одном хостинге и отклонённая на другом.
  *
  * Тот же файл читает браузер: форма проверяет ввод теми же правилами, чтобы
  * человек узнавал про опечатку сразу, а не после круга по сети.
+ *
+ * Файл на обычном JavaScript, а не на TypeScript, и импортируется с явным
+ * расширением. Так надо: на Vercel функция запускается как есть, без сборки,
+ * и импорт «../shared/lead» без расширения там просто не находится. Первая
+ * же выкладка ответила FUNCTION_INVOCATION_FAILED именно поэтому.
+ *
+ * @typedef {"telegram" | "phone"} ContactKind
+ * @typedef {{name: string, contactKind: ContactKind, contact: string,
+ *            email: string | null, source: string | null}} Lead
  */
-
-export type ContactKind = "telegram" | "phone";
-
-export type Lead = {
-  name: string;
-  contactKind: ContactKind;
-  contact: string;
-  email: string | null;
-  source: string | null;
-};
 
 // Юзернейм Telegram: латиница, цифры и подчёркивание, от пяти символов.
 // Проверяем форму, а не существование: узнать второе можно только у Telegram.
@@ -27,7 +26,8 @@ const TELEGRAM = /^[a-zA-Z0-9_]{5,32}$/;
 const PREFIXES = ["https://", "http://", "t.me/", "telegram.me/", "@"];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export function cleanName(value: string): string {
+/** @param {string} value */
+export function cleanName(value) {
   // Управляющие символы вырезаем по номеру, а не регуляркой с диапазоном: сами
   // эти символы в исходнике невидимы, и любая правка файла их однажды съест.
   // В Telegram перевод строки внутри поля превращает одно сообщение в подделку
@@ -39,7 +39,11 @@ export function cleanName(value: string): string {
   return plain.replace(/\s+/g, " ").trim();
 }
 
-export function normalizeTelegram(value: string): string | null {
+/**
+ * @param {string} value
+ * @returns {string | null}
+ */
+export function normalizeTelegram(value) {
   let handle = value.trim();
   for (;;) {
     const found = PREFIXES.find((prefix) => handle.toLowerCase().startsWith(prefix));
@@ -50,7 +54,11 @@ export function normalizeTelegram(value: string): string | null {
   return TELEGRAM.test(handle) ? `@${handle}` : null;
 }
 
-export function normalizePhone(value: string): string | null {
+/**
+ * @param {string} value
+ * @returns {string | null}
+ */
+export function normalizePhone(value) {
   let digits = value.replace(/\D/g, "");
   // Восьмёрка в начале это местная запись российского и казахстанского номера.
   if (digits.length === 11 && digits.startsWith("8")) digits = `7${digits.slice(1)}`;
@@ -58,17 +66,20 @@ export function normalizePhone(value: string): string | null {
   return `+${digits}`;
 }
 
-export type Check = { ok: true; lead: Lead } | { ok: false; message: string };
-
-/** Разбирает то, что пришло из формы. Никому на слово не верим: тело запроса
- *  может прислать кто угодно, а не только наша страница. */
-export function checkLead(raw: unknown): Check {
-  const body = (raw ?? {}) as Record<string, unknown>;
+/**
+ * Разбирает то, что пришло из формы. Никому на слово не верим: тело запроса
+ * может прислать кто угодно, а не только наша страница.
+ *
+ * @param {unknown} raw
+ * @returns {{ok: true, lead: Lead} | {ok: false, message: string}}
+ */
+export function checkLead(raw) {
+  const body = raw ?? {};
 
   const name = cleanName(String(body.name ?? "")).slice(0, 80);
   if (name.length < 2) return { ok: false, message: "Напишите, как к вам обращаться" };
 
-  const kind: ContactKind = body.contact_kind === "phone" ? "phone" : "telegram";
+  const kind = body.contact_kind === "phone" ? "phone" : "telegram";
   const given = String(body.contact ?? "").slice(0, 120);
   const contact = kind === "telegram" ? normalizeTelegram(given) : normalizePhone(given);
   if (!contact) {
@@ -96,11 +107,15 @@ export function checkLead(raw: unknown): Check {
   };
 }
 
-const escape = (value: string) =>
+/** @param {string} value */
+const escape = (value) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** Заявка так, как её читают с телефона: сначала контакт, потом остальное. */
-export function leadMessage(lead: Lead): string {
+/**
+ * Заявка так, как её читают с телефона: сначала контакт, потом остальное.
+ * @param {Lead} lead
+ */
+export function leadMessage(lead) {
   const lines = [
     "<b>Заявка в лист ожидания</b>",
     "",
@@ -114,15 +129,16 @@ export function leadMessage(lead: Lead): string {
   return lines.join("\n");
 }
 
-/** Список через запятую: чаты в одной настройке, домены в другой. */
-export function commaList(value: string | undefined): string[] {
+/**
+ * Список через запятую: чаты в одной настройке, домены в другой.
+ * @param {string | undefined} value
+ */
+export function commaList(value) {
   return (value ?? "")
     .split(",")
     .map((piece) => piece.trim())
     .filter(Boolean);
 }
-
-export type Delivery = { sent: number; failed: string[] };
 
 /**
  * Отправляет заявку во все наши чаты.
@@ -130,11 +146,12 @@ export type Delivery = { sent: number; failed: string[] };
  * Возвращает, кому дошло, а кому нет. Самая частая причина отказа не поломка,
  * а то, что получатель ни разу не нажал в боте «Старт»: Telegram запрещает боту
  * писать первым, и такая заявка пропала бы молча.
+ *
+ * @param {Lead} lead
+ * @param {{token: string, chats: string[]}} env
+ * @returns {Promise<{sent: number, failed: string[]}>}
  */
-export async function sendLead(
-  lead: Lead,
-  env: { token: string; chats: string[] },
-): Promise<Delivery> {
+export async function sendLead(lead, env) {
   const text = leadMessage(lead);
   const markup =
     lead.contactKind === "telegram"
@@ -176,12 +193,13 @@ export async function sendLead(
  *
  * Приманку и слишком быструю отправку не отвергаем, а тихо принимаем: разница
  * в ответах это подсказка роботу, что именно нужно поменять.
+ *
+ * @param {unknown} raw
+ * @param {{token?: string, chats?: string}} env
+ * @returns {Promise<{status: number, body: Record<string, unknown>}>}
  */
-export async function handleLead(
-  raw: unknown,
-  env: { token?: string; chats?: string },
-): Promise<{ status: number; body: Record<string, unknown> }> {
-  const body = (raw ?? {}) as Record<string, unknown>;
+export async function handleLead(raw, env) {
+  const body = raw ?? {};
 
   if (String(body.company ?? "").trim()) return { status: 200, body: { ok: true } };
   // Человек не заполняет три поля за полторы секунды. Робот заполняет.
@@ -195,6 +213,7 @@ export async function handleLead(
   const token = env.token ?? "";
   const chats = commaList(env.chats);
   if (!token || chats.length === 0) {
+    console.error("заявка пришла, но бот не настроен: нет токена или списка чатов");
     return {
       status: 503,
       body: { error: { message: "Форма пока не настроена. Напишите нам, пожалуйста, в Telegram" } },
@@ -224,8 +243,13 @@ export async function handleLead(
   return { status: 201, body: { ok: true } };
 }
 
-/** Чужой домен, постучавшийся в форму. Пусто в настройке значит «пускаем всех». */
-export function originAllowed(origin: string | null, allowed: string | undefined): boolean {
+/**
+ * Чужой домен, постучавшийся в форму. Пусто в настройке значит «пускаем всех».
+ *
+ * @param {string | null} origin
+ * @param {string | undefined} allowed
+ */
+export function originAllowed(origin, allowed) {
   const list = commaList(allowed);
   if (list.length === 0) return true;
   if (!origin) return false;

@@ -7,7 +7,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "local": "astro build && node --env-file-if-exists=.env scripts/serve.mjs",
-    "test": "node --test test/*.test.ts"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "astro": "^5.14.0"
