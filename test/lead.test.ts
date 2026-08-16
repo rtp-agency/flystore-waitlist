@@ -85,6 +85,30 @@ test("приманка и мгновенная отправка отвечают
   assert.equal(fast.status, 200);
 });
 
+test("недоступный чат это отказ, а один доступный из двух это успех", async () => {
+  const real = globalThis.fetch;
+  const seen: string[] = [];
+  // Первый получатель не нажимал «Старт», второй нажимал.
+  globalThis.fetch = (async (_url: string, init: { body: string }) => {
+    const chat = String(JSON.parse(init.body).chat_id);
+    seen.push(chat);
+    return { ok: chat === "2" } as Response;
+  }) as typeof fetch;
+
+  try {
+    const lead = { name: "Коля", contact_kind: "telegram", contact: "kolya_dev", elapsed: 9000 };
+
+    const lost = await handleLead(lead, { token: "x", chats: "1" });
+    assert.equal(lost.status, 502);
+
+    const partly = await handleLead(lead, { token: "x", chats: "1,2" });
+    assert.equal(partly.status, 201);
+    assert.deepEqual(seen, ["1", "1", "2"]);
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
 test("без настроек заявку не теряем молча", async () => {
   const answer = await handleLead(
     { name: "Коля", contact_kind: "telegram", contact: "kolya_dev", elapsed: 9000 },

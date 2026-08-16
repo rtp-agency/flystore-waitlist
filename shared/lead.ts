@@ -122,17 +122,19 @@ export function commaList(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+export type Delivery = { sent: number; failed: string[] };
+
 /**
  * Отправляет заявку во все наши чаты.
  *
- * Возвращает, дошло ли хоть куда-то. Если не дошло никуда, человеку честно
- * говорим «попробуйте ещё раз»: базы у этой страницы нет, и потерянная заявка
- * теряется навсегда.
+ * Возвращает, кому дошло, а кому нет. Самая частая причина отказа не поломка,
+ * а то, что получатель ни разу не нажал в боте «Старт»: Telegram запрещает боту
+ * писать первым, и такая заявка пропала бы молча.
  */
 export async function sendLead(
   lead: Lead,
   env: { token: string; chats: string[] },
-): Promise<boolean> {
+): Promise<Delivery> {
   const text = leadMessage(lead);
   const markup =
     lead.contactKind === "telegram"
@@ -156,14 +158,17 @@ export async function sendLead(
             reply_markup: markup,
           }),
         });
-        return response.ok;
+        return { chat, ok: response.ok };
       } catch {
-        return false;
+        return { chat, ok: false };
       }
     }),
   );
 
-  return results.some(Boolean);
+  return {
+    sent: results.filter((item) => item.ok).length,
+    failed: results.filter((item) => !item.ok).map((item) => item.chat),
+  };
 }
 
 /**
@@ -196,8 +201,20 @@ export async function handleLead(
     };
   }
 
-  const delivered = await sendLead(checked.lead, { token, chats });
-  if (!delivered) {
+  const delivery = await sendLead(checked.lead, { token, chats });
+
+  if (delivery.failed.length > 0) {
+    console.warn(
+      `не доставлено в чаты: ${delivery.failed.join(", ")}. ` +
+        "Каждый получатель должен хотя бы раз нажать «Старт» в боте",
+    );
+  }
+
+  if (delivery.sent === 0) {
+    // Базы у страницы нет, и молча потерянная заявка теряется навсегда.
+    // Пусть она хотя бы останется в журнале хостинга: оттуда её можно достать
+    // руками, пока чат чинится.
+    console.error(`заявка не доставлена никому: ${JSON.stringify(checked.lead)}`);
     return {
       status: 502,
       body: { error: { message: "Не получилось отправить. Попробуйте ещё раз через минуту" } },
