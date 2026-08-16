@@ -8,7 +8,7 @@
  * Отсюда же общий try: неожиданная ошибка обязана вернуться человеку понятной
  * строкой, а не страницей хостинга, из которой не видно вообще ничего.
  */
-import { handleLead, originAllowed, setting } from "../shared/lead.js";
+import { BOT_TOKEN, CHAT_IDS, handleLead, originAllowed, setting } from "../shared/lead.js";
 
 export default async function handler(request, response) {
   try {
@@ -37,8 +37,8 @@ export default async function handler(request, response) {
     }
 
     const answer = await handleLead(body, {
-      token: setting(process.env, "TELEGRAM_BOT_TOKEN"),
-      chats: setting(process.env, "TELEGRAM_CHAT_IDS"),
+      token: setting(process.env, BOT_TOKEN),
+      chats: setting(process.env, CHAT_IDS),
     });
 
     response.status(answer.status).json(answer.body);

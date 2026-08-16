@@ -8,7 +8,7 @@
  *
  * Разбор и отправка общие с версией для Vercel, здесь только вход и выход.
  */
-import { handleLead, originAllowed, setting } from "../../shared/lead.js";
+import { BOT_TOKEN, CHAT_IDS, handleLead, originAllowed, setting } from "../../shared/lead.js";
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), {
@@ -30,8 +30,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     const answer = await handleLead(body, {
-      token: setting(env, "TELEGRAM_BOT_TOKEN"),
-      chats: setting(env, "TELEGRAM_CHAT_IDS"),
+      token: setting(env, BOT_TOKEN),
+      chats: setting(env, CHAT_IDS),
     });
 
     return json(answer.status, answer.body);

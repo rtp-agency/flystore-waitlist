@@ -11,6 +11,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  BOT_TOKEN,
+  CHAT_IDS,
   checkLead,
   cleanName,
   handleLead,
@@ -130,13 +132,13 @@ test("без настроек заявку не теряем молча", async 
   assert.equal(answer.status, 503);
 });
 
-test("настройка читается и под именем с двойкой", () => {
-  assert.equal(setting({ TOKEN: "первый" }, "TOKEN"), "первый");
-  // Заведённую переменную трогать не стали, значение положили рядом.
-  assert.equal(setting({ TOKEN2: "второй" }, "TOKEN"), "второй");
-  // Пустая строка это не значение: смысл имени с двойкой как раз в подмене.
-  assert.equal(setting({ TOKEN: "  ", TOKEN2: "второй" }, "TOKEN"), "второй");
+test("настройка читается строго по своему имени", () => {
+  assert.equal(setting({ TELEGRAM_BOT_TOKEN2: "наш" }, BOT_TOKEN), "наш");
+  // Соседняя переменная без двойки это другой бот под другие задачи.
+  // Заглянуть в неё нельзя даже когда своя пуста: заявки уйдут не туда.
+  assert.equal(setting({ TELEGRAM_BOT_TOKEN: "чужой" }, BOT_TOKEN), "");
+  assert.equal(setting({ TELEGRAM_CHAT_IDS: "1,2" }, CHAT_IDS), "");
   // Вставка из буфера приносит перевод строки, Telegram на него отвечает отказом.
-  assert.equal(setting({ TOKEN: ` abc${String.fromCharCode(10)}` }, "TOKEN"), "abc");
-  assert.equal(setting(undefined, "TOKEN"), "");
+  assert.equal(setting({ [BOT_TOKEN]: ` abc${String.fromCharCode(10)}` }, BOT_TOKEN), "abc");
+  assert.equal(setting(undefined, BOT_TOKEN), "");
 });
