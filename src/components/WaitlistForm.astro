@@ -314,15 +314,21 @@ const tg = import.meta.env.PUBLIC_TG_LINK ?? "";
     };
 
     const hush = () => error.classList.add("hidden");
-    name.addEventListener("input", hush);
-    contact.addEventListener("input", hush);
-    email.addEventListener("input", hush);
+    // И на input, и на change: автозаполнение браузера подставляет значения
+    // молча, без событий ввода, и прошлая ошибка висела над свежими данными.
+    for (const field of [name, contact, email]) {
+      field.addEventListener("input", hush);
+      field.addEventListener("change", hush);
+    }
 
     let sending = false;
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (sending) return;
+      // Прошлый отказ гасим до проверок: иначе человек жмёт кнопку, видит
+      // ту же красную строку и решает, что не изменилось ничего.
+      hush();
 
       const person = name.value.trim();
       if (person.length < 2) {
